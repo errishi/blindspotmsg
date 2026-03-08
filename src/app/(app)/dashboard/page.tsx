@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from "@/components/ui/button";
-import MessageCard from "@/components/MessageCard";
+import {MessageCard} from "@/components/MessageCard";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Message } from "@/model/User";
