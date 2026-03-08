@@ -36,19 +36,19 @@ export async function POST(request: Request) {
           success: false,
           message: "Failed to update user to accept messages",
         },
-        { status: 401 },
+        { status: 404 },
       );
     }
     return Response.json(
       {
         success: true,
         message: "Message acceptance status updated successfully",
-        updatedUser,
+        isAcceptingMessage: updatedUser.isAcceptingMessage,
       },
       { status: 200 },
     );
   } catch (error) {
-    console.log("Failed to update user to accept messages");
+    console.log("Failed to update user to accept messages", error);
     return Response.json(
       {
         success: false,
@@ -93,12 +93,12 @@ export async function GET(request: Request) {
   return Response.json(
     {
       success: true,
-      isAcceptinMessages: foundUser.isAcceptingMessage
+      isAcceptingMessage: foundUser.isAcceptingMessage,
     },
     { status: 200 },
   );
   } catch (error) {
-    console.log("Failed to update user to accept messages");
+    console.log("Error in getting message acceptance status", error);
     return Response.json(
       {
         success: false,

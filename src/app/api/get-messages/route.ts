@@ -24,14 +24,9 @@ export async function GET(request: Request) {
   const userId = new mongoose.Types.ObjectId(user._id);
 
   try {
-    const user = await UserModel.aggregate([
-      { $match: { id: userId } },
-      { $unwind: "$messages" },
-      { $sort: { "messages.createdAt": -1 } },
-      { $group: { _id: "$_id", messages: { $push: "messages" } } },
-    ]);
+    const foundUser = await UserModel.findById(userId).select("messages").lean();
 
-    if (!user) {
+    if (!foundUser) {
       return Response.json(
         {
           success: false,
@@ -40,14 +35,19 @@ export async function GET(request: Request) {
         { status: 404 },
       );
     }
+
+    const sortedMessages = [...(foundUser.messages ?? [])].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+
     return Response.json(
       {
         success: true,
-        messages: user[0].messages
+        messages: sortedMessages,
       },
       { status: 200 },
     );
-} catch (error) {
+  } catch (error) {
     console.log("An unexpected error: ", error);
     return Response.json(
       {

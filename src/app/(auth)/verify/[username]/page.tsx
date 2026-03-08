@@ -26,11 +26,11 @@ const verifyAccount = () => {
         try {
             const response = await axios.post('/api/verify-code', {
                 username: params.username,
-                code: data.code
+                code: data.code.trim()
             });
 
             toast.success(response.data.message);
-            router.replace(`sign-in`);
+            router.replace('/sign-in');
 
         } catch (error) {
             console.error("Error in signup of user", error);

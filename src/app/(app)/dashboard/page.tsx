@@ -14,7 +14,6 @@ import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { User } from "next-auth";
 
 const page = () => {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -22,13 +21,16 @@ const page = () => {
     const [isSwitchLoading, setIsSwitchLoading] = useState(false);
     
     const handleDeleteMessage = (messageId: string) => {
-        setMessages(messages.filter((message) => message._id.toString() !== messageId));
+      setMessages((prevMessages) => prevMessages.filter((message) => message._id.toString() !== messageId));
     };
 
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
 
     const form = useForm({
-        resolver: zodResolver(acceptMessageSchema)
+        resolver: zodResolver(acceptMessageSchema),
+        defaultValues: {
+          acceptMessages: false,
+        },
     });
 
     const { register, watch, setValue } = form;
@@ -77,22 +79,26 @@ const page = () => {
     }, [session, setValue, fetchAcceptMessage, fetchMessages]);
 
     // handle switch change
-    const handleSwitchChange = async() => {
+    const handleSwitchChange = async (checked: boolean) => {
+      setIsSwitchLoading(true);
         try {
             const response = await axios.post<ApiResponse>('/api/accept-messages', {
-                acceptMessages: !acceptMessages
+          acceptMessages: checked,
             });
-            setValue('acceptMessages', !acceptMessages);
+        setValue('acceptMessages', checked);
             toast(response.data.message);
         } catch (error) {
             const axiosError = error as AxiosError<ApiResponse>;
             toast.error(axiosError.response?.data.message || "Failed to fetch message settings")
+      } finally {
+        setIsSwitchLoading(false);
         }
     }
 
-    const { username } = session?.user as User;
-
-    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    const username = session?.user?.username ?? '';
+    const baseUrl = typeof window !== 'undefined'
+      ? `${window.location.protocol}//${window.location.host}`
+      : '';
     const profileUrl = `${baseUrl}/u/${username}`;
 
     const copyToClipboard = () => {
@@ -102,7 +108,11 @@ const page = () => {
         });
     }
 
-    if(!session || !session.user){
+    if (status === 'loading') {
+      return <div>Loading dashboard...</div>
+    }
+
+    if(!session || !session.user || !username){
         return <div>Please Login!!</div>
     }
 
